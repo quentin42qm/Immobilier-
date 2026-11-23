@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f5f8b">
+<title>Comparateur immo</title>
+<style>
+:root{
+  --bg:#f3f5f8; --card:#fff; --text:#18212b; --muted:#5d6b7a; --line:#dde3ea;
+  --primary:#1f5f8b; --primary-2:#e6f0f7; --ok:#1d7a3e; --ok-bg:#e3f4e8;
+  --bad:#c0262d; --bad-bg:#fde8e8; --warn:#9a6200; --warn-bg:#fff3d6;
+  --best:#e3f4e8; --best-text:#14612f; --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#11161c; --card:#1b232c; --text:#e8edf2; --muted:#9aa8b6; --line:#2d3946;
+    --primary:#5aa6dc; --primary-2:#1d3344; --ok:#5bd087; --ok-bg:#163524;
+    --bad:#ff6b6b; --bad-bg:#3d1a1c; --warn:#f0b54a; --warn-bg:#3a2d12;
+    --best:#163524; --best-text:#7be3a2; --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding-bottom:calc(80px + env(safe-area-inset-bottom));-webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:5;background:var(--primary);color:#fff;padding:12px 16px;
+  padding-top:calc(12px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;gap:8px}
+header h1{font-size:1.1rem;margin:0}
+header small{opacity:.85;font-size:.8rem}
+main{max-width:900px;margin:0 auto;padding:12px 16px}
+h2{font-size:1.15rem;margin:8px 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
+.muted{color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grow{flex:1}
+button,.btn{font:inherit;border:0;border-radius:12px;min-height:48px;padding:10px 16px;cursor:pointer;
+  background:var(--primary-2);color:var(--primary);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+button.primary{background:var(--primary);color:#fff}
+button.danger{background:var(--bad-bg);color:var(--bad)}
+button.block{width:100%}
+button:active{transform:scale(.98)}
+label{display:block;font-size:.9rem;font-weight:600;margin:10px 0 4px}
+input,select,textarea{font:inherit;width:100%;min-height:48px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;
+  background:var(--bg);color:var(--text)}
+textarea{min-height:90px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--primary);outline-offset:1px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{flex:1;border-radius:0;background:transparent;color:var(--text);font-weight:600}
+.seg button.on{background:var(--primary);color:#fff}
+.stars{display:flex;gap:4px}
+.stars button{flex:1;min-height:48px;font-size:1.5rem;background:transparent;color:#c9ced5;padding:0}
+.stars button.on{color:#f2a900}
+/* bottom nav */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);
+  display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border-radius:0;background:transparent;color:var(--muted);flex-direction:column;gap:2px;min-height:64px;font-size:.8rem}
+nav button .ico{font-size:1.35rem;line-height:1}
+nav button.on{color:var(--primary)}
+/* badges */
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:.78rem;font-weight:700;background:var(--primary-2);color:var(--primary);white-space:nowrap}
+.badge.bad{background:var(--bad-bg);color:var(--bad)}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}
+.dpe{color:#fff;min-width:28px;text-align:center}
+.dpe-A{background:#009036}.dpe-B{background:#53af31}.dpe-C{background:#c6d300;color:#222}.dpe-D{background:#fcea0d;color:#222}
+.dpe-E{background:#fbba00;color:#222}.dpe-F{background:#eb6909}.dpe-G{background:#e2001a}
+/* bien card */
+.bien-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.bien-head h3{margin:0;font-size:1.1rem}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.kpi-main{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.kpi{background:var(--bg);border-radius:12px;padding:10px}
+.kpi .l{font-size:.78rem;color:var(--muted)}
+.kpi .v{font-size:1.25rem;font-weight:800}
+.kpi.bad{background:var(--bad-bg)} .kpi.bad .v{color:var(--bad)}
+.kpi.ok .v{color:var(--ok)}
+.lines{margin:0;padding:0;list-style:none;font-size:.93rem}
+.lines li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.lines li:last-child{border-bottom:0}
+.lines li b{white-space:nowrap}
+.alert{padding:10px 12px;border-radius:10px;background:var(--bad-bg);color:var(--bad);font-weight:700;margin:8px 0;font-size:.92rem}
+.comment{white-space:pre-wrap;font-size:.92rem;background:var(--bg);padding:8px 10px;border-radius:10px;margin-top:8px}
+details summary{cursor:pointer;font-weight:600;color:var(--primary);padding:8px 0;min-height:40px}
+/* table */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{padding:9px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{background:var(--bg);font-size:.78rem;color:var(--muted);position:sticky;top:0}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card);z-index:1;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+th:first-child{background:var(--bg);z-index:2}
+td.best{background:var(--best);color:var(--best-text);font-weight:800}
+td.worse{color:var(--bad);font-weight:700}
+th.sorted{color:var(--primary)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px}
+.chips button{white-space:nowrap;min-height:44px;flex:none}
+.chips button.on{background:var(--primary);color:#fff}
+.best-list li{padding:8px 0}
+/* modal */
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.45);display:none}
+.sheet.open{display:block}
+.sheet-inner{position:absolute;inset:0;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet-head{position:sticky;top:0;z-index:2;background:var(--card);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top))}
+.sheet-head h2{margin:0;font-size:1.05rem}
+.sheet-body{max-width:700px;margin:0 auto;padding:12px 16px 140px}
+.sheet-foot{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;
+  padding-bottom:calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center}
+.preview{font-size:.85rem;color:var(--muted);flex:1}
+.preview b{color:var(--text)}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#222;color:#fff;
+  padding:10px 16px;border-radius:10px;z-index:30;font-size:.9rem;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1}
+.empty{text-align:center;padding:30px 10px}
+.hint{font-size:.8rem;color:var(--muted);margin-top:4px}
+@media (min-width:700px){ .kpi-main{grid-template-columns:repeat(4,1fr)} .biens-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px} .biens-grid .card{margin:0} }
+</style>
+</head>
+<body>
+<header>
+  <div><h1>🏡 Comparateur immo</h1><small>Loire · Montbrison / Balbigny</small></div>
+  <span id="hdr-count" class="badge" style="background:rgba(255,255,255,.2);color:#fff"></span>
+</header>
+
+<main>
+  <section id="view-biens"></section>
+  <section id="view-comp" hidden></section>
+  <section id="view-foyer" hidden></section>
+</main>
+
+<nav>
+  <button data-view="biens" class="on"><span class="ico">🏠</span>Biens</button>
+  <button data-view="comp"><span class="ico">📊</span>Comparer</button>
+  <button data-view="foyer"><span class="ico">👥</span>Foyer</button>
+</nav>
+
+<div class="sheet" id="sheet">
+  <div class="sheet-inner">
+    <div class="sheet-head">
+      <button id="sheet-close" aria-label="Fermer">✕</button>
+      <h2 id="sheet-title">Bien</h2>
+      <span style="width:48px"></span>
+    </div>
+    <div class="sheet-body" id="sheet-body"></div>
+    <div class="sheet-foot">
+      <div class="preview" id="sheet-preview"></div>
+      <button class="primary" id="sheet-save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="import-file" accept="application/json,.json" hidden>
+<div class="toast" id="toast"></div>
+
+<!-- ===================== CALCULS (fonctions pures, testables) ===================== -->
+<script id="calc">
+var Calc = (function(){
+  function num(v){ if(v===null||v===undefined||v==='') return 0; var n=parseFloat(String(v).replace(/\s/g,'').replace(',','.')); return isFinite(n)?n:0; }
+
+  /** Mensualité hors assurance d'un prêt amortissable à taux fixe. */
+  function mensualite(capital, tauxAnnuelPct, annees){
+    var n = annees*12, r = tauxAnnuelPct/100/12;
+    if(capital<=0 || n<=0) return 0;
+    if(r===0) return capital/n;
+    return capital*r/(1-Math.pow(1+r,-n));
+  }
+
+  /** Calcul complet pour un bien et un foyer donnés. */
+  function bien(b, f){
+    var prix=num(b.prix), travaux=num(b.travaux), surface=num(b.surface);
+    var tauxNotaire = b.type==='neuf' ? num(f.notaireNeuf) : num(f.notaireAncien);
+    var notaire = prix*tauxNotaire/100;
+    var total = prix + notaire + travaux;
+    var emprunt = Math.max(0, total - num(f.apport));
+    var annees = num(f.duree), n = annees*12;
+    var mensCredit = mensualite(emprunt, num(f.taux), annees);
+    var mensAssu = emprunt*num(f.tauxAssurance)/100/12; // assurance sur capital initial
+    var mensTotale = mensCredit + mensAssu;
+    var interets = mensCredit*n - emprunt;
+    var coutAssurance = mensAssu*n;
+    var coutCredit = interets + coutAssurance;
+    var revenus = num(f.revenu1) + num(f.revenu2);
+    var endettement = revenus>0 ? mensTotale/revenus*100 : (mensTotale>0?Infinity:0);
+    var coutReel = mensTotale + num(b.taxeFonciere)/12 + num(b.energie)/12;
+    var prixM2 = surface>0 ? prix/surface : 0;
+    var prixM2Travaux = surface>0 ? (prix+travaux)/surface : 0;
+    var tM=num(b.tMontbrison), tB=num(b.tBalbigny);
+    var apportExcedent = Math.max(0, num(f.apport) - total);
+    return {
+      prix:prix, tauxNotaire:tauxNotaire, notaire:notaire, travaux:travaux, total:total, emprunt:emprunt,
+      mensCredit:mensCredit, mensAssu:mensAssu, mensTotale:mensTotale,
+      interets:interets, coutAssurance:coutAssurance, coutCredit:coutCredit,
+      revenus:revenus, endettement:endettement, endettementKo: endettement > num(f.endettementMax),
+      coutReel:coutReel, prixM2:prixM2, prixM2Travaux:prixM2Travaux,
+      trajetMax: Math.max(tM,tB), trajetKoM: tM>30, trajetKoB: tB>30, apportExcedent:apportExcedent,
+      /* capacité : mensualité max autorisée et capital empruntable correspondant */
+      mensMax: revenus*num(f.endettementMax)/100
+    };
+  }
+
+  /** Capital empruntable maximum pour une mensualité totale (crédit+assurance) donnée. */
+  function capaciteEmprunt(mensMax, f){
+    var annees=num(f.duree), n=annees*12, r=num(f.taux)/100/12, a=num(f.tauxAssurance)/100/12;
+    if(mensMax<=0||n<=0) return 0;
+    var facteur = (r===0 ? 1/n : r/(1-Math.pow(1+r,-n))) + a;
+    return mensMax/facteur;
+  }
+
+  return {num:num, mensualite:mensualite, bien:bien, capaciteEmprunt:capaciteEmprunt};
+})();
+if(typeof module!=='undefined') module.exports = Calc;
+</script>
+
+<!-- ===================== APPLICATION ===================== -->
+<script>
+(function(){
+var STORE_KEY = 'comparateurImmo42_v1';
+var num = Calc.num;
+
+var DEFAULT_FOYER = {
+  nom1:'Moi', nom2:'Ma compagne', revenu1:2200, revenu2:1900, apport:30000,
+  taux:3.3, duree:25, tauxAssurance:0.30, endettementMax:35,
+  notaireAncien:7.5, notaireNeuf:2.5
+};
+
+function exemples(){
+  return [
+    { id:uid(), exemple:true, nom:'Maison de ville avec jardin', commune:'Feurs', type:'ancien', prix:229000,
+      surface:105, terrain:450, chambres:3, travaux:18000, taxeFonciere:1250, energie:1900, dpe:'D',
+      tMontbrison:25, tBalbigny:10, note:4, commentaire:'EXEMPLE fictif – à supprimer.\nProche gare et commerces. Chaudière fioul à remplacer, prévoir isolation combles.' },
+    { id:uid(), exemple:true, nom:'Maison neuve plain-pied', commune:'Sury-le-Comtal', type:'neuf', prix:279000,
+      surface:95, terrain:520, chambres:3, travaux:4000, taxeFonciere:1100, energie:850, dpe:'A',
+      tMontbrison:12, tBalbigny:38, note:3, commentaire:'EXEMPLE fictif – à supprimer.\nRE2020, pompe à chaleur. Trop loin de Balbigny.' }
+  ];
+}
+
+function uid(){ return 'b'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+/* ---------- état + sauvegarde ---------- */
+var state = load();
+function load(){
+  try{
+    var raw = localStorage.getItem(STORE_KEY);
+    if(raw){ var s = JSON.parse(raw); return normalize(s); }
+  }catch(e){}
+  return { foyer: Object.assign({}, DEFAULT_FOYER), biens: exemples(), sort:'mensTotale', view:'biens' };
+}
+function normalize(s){
+  return {
+    foyer: Object.assign({}, DEFAULT_FOYER, s && s.foyer || {}),
+    biens: Array.isArray(s && s.biens) ? s.biens.map(function(b){ return Object.assign({id:uid()}, b); }) : [],
+    sort: (s && s.sort) || 'mensTotale',
+    view: (s && s.view) || 'biens'
+  };
+}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){ toast('⚠️ Sauvegarde impossible dans ce navigateur'); }
+  document.getElementById('hdr-count').textContent = state.biens.length + ' bien' + (state.biens.length>1?'s':'');
+}
+
+/* ---------- formats ---------- */
+function eur(v, dec){ if(!isFinite(v)) return '—'; return v.toLocaleString('fr-FR',{minimumFractionDigits:dec||0,maximumFractionDigits:dec||0})+' €'; }
+function pct(v, dec){ if(!isFinite(v)) return '—'; return v.toLocaleString('fr-FR',{minimumFractionDigits:dec==null?1:dec,maximumFractionDigits:dec==null?1:dec})+' %'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function stars(n){ n=Math.round(num(n)); var s=''; for(var i=1;i<=5;i++) s+= i<=n?'★':'☆'; return s; }
+function titre(b){ return (b.nom||'Sans nom') + (b.commune? ' – '+b.commune:''); }
+
+function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(function(){t.classList.remove('show');},2200); }
+
+/* ---------- navigation ---------- */
+function show(view){
+  state.view=view; save();
+  ['biens','comp','foyer'].forEach(function(v){ document.getElementById('view-'+v).hidden = v!==view; });
+  document.querySelectorAll('nav button').forEach(function(b){ b.classList.toggle('on', b.dataset.view===view); });
+  render(); window.scrollTo(0,0);
+}
+document.querySelectorAll('nav button').forEach(function(b){ b.addEventListener('click', function(){ show(b.dataset.view); }); });
+
+function render(){
+  if(state.view==='biens') renderBiens();
+  else if(state.view==='comp') renderComp();
+  else renderFoyer();
+}
+
+/* ---------- vue BIENS ---------- */
+function renderBiens(){
+  var f=state.foyer, el=document.getElementById('view-biens');
+  var html = '<div class="row" style="margin-bottom:12px"><h2 class="grow" style="margin:0">Nos biens</h2>'+
+             '<button class="primary" id="btn-add">＋ Ajouter</button></div>';
+  if(!state.biens.length){
+    html += '<div class="card empty"><p>Aucun bien pour l\'instant.</p><button class="primary" id="btn-add2">＋ Ajouter un premier bien</button></div>';
+  }
+  html += '<div class="biens-grid">';
+  state.biens.forEach(function(b){
+    var c = Calc.bien(b,f);
+    html += '<article class="card">'+
+      '<div class="bien-head"><div><h3>'+esc(b.nom||'Sans nom')+'</h3><div class="muted">'+esc(b.commune||'')+'</div></div>'+
+      '<div style="text-align:right"><div style="color:#f2a900;font-size:1.1rem;white-space:nowrap">'+stars(b.note)+'</div></div></div>'+
+      '<div class="badges">'+
+        '<span class="badge">'+(b.type==='neuf'?'Neuf':'Ancien')+'</span>'+
+        (b.dpe?'<span class="badge dpe dpe-'+esc(b.dpe)+'">DPE '+esc(b.dpe)+'</span>':'')+
+        '<span class="badge '+(c.trajetKoM?'bad':'ok')+'">Montbrison '+num(b.tMontbrison)+' min'+(c.trajetKoM?' ⚠️':'')+'</span>'+
+        '<span class="badge '+(c.trajetKoB?'bad':'ok')+'">Balbigny '+num(b.tBalbigny)+' min'+(c.trajetKoB?' ⚠️':'')+'</span>'+
+        (b.exemple?'<span class="badge" style="background:var(--warn-bg);color:var(--warn)">Exemple</span>':'')+
+      '</div>'+
+      (c.endettementKo?'<div class="alert">🔴 Endettement '+pct(c.endettement)+' &gt; '+pct(num(f.endettementMax),0)+' max : la banque risque de refuser.</div>':'')+
+      '<div class="kpi-main">'+
+        '<div class="kpi"><div class="l">Mensualité (crédit + assur.)</div><div class="v">'+eur(c.mensTotale)+'</div></div>'+
+        '<div class="kpi"><div class="l">Coût mensuel réel</div><div class="v">'+eur(c.coutReel)+'</div></div>'+
+        '<div class="kpi '+(c.endettementKo?'bad':'ok')+'"><div class="l">Endettement</div><div class="v">'+pct(c.endettement)+'</div></div>'+
+        '<div class="kpi"><div class="l">Prix au m²</div><div class="v">'+(c.prixM2?eur(c.prixM2):'—')+'</div></div>'+
+      '</div>'+
+      '<ul class="lines">'+
+        '<li><span>Prix</span><b>'+eur(c.prix)+'</b></li>'+
+        '<li><span>Frais de notaire ('+pct(c.tauxNotaire)+')</span><b>'+eur(c.notaire)+'</b></li>'+
+        '<li><span>Travaux</span><b>'+eur(c.travaux)+'</b></li>'+
+        '<li><span>Total opération</span><b>'+eur(c.total)+'</b></li>'+
+        '<li><span>À emprunter (apport '+eur(num(f.apport))+')</span><b>'+eur(c.emprunt)+'</b></li>'+
+      '</ul>'+
+      '<details><summary>Détails</summary><ul class="lines">'+
+        '<li><span>Mensualité crédit seul</span><b>'+eur(c.mensCredit,2)+'</b></li>'+
+        '<li><span>Assurance / mois</span><b>'+eur(c.mensAssu,2)+'</b></li>'+
+        '<li><span>Taxe foncière / mois</span><b>'+eur(num(b.taxeFonciere)/12)+'</b></li>'+
+        '<li><span>Énergie / mois</span><b>'+eur(num(b.energie)/12)+'</b></li>'+
+        '<li><span>Coût total du crédit ('+num(f.duree)+' ans)</span><b>'+eur(c.coutCredit)+'</b></li>'+
+        '<li><span>&nbsp;&nbsp;dont intérêts</span><b>'+eur(c.interets)+'</b></li>'+
+        '<li><span>&nbsp;&nbsp;dont assurance</span><b>'+eur(c.coutAssurance)+'</b></li>'+
+        '<li><span>Prix au m² travaux inclus</span><b>'+(c.prixM2Travaux?eur(c.prixM2Travaux):'—')+'</b></li>'+
+        '<li><span>Surface / terrain</span><b>'+num(b.surface)+' m² / '+num(b.terrain)+' m²</b></li>'+
+        '<li><span>Chambres</span><b>'+num(b.chambres)+'</b></li>'+
+        (c.apportExcedent>0?'<li><span>Apport restant</span><b>'+eur(c.apportExcedent)+'</b></li>':'')+
+      '</ul></details>'+
+      (b.commentaire?'<div class="comment">'+esc(b.commentaire)+'</div>':'')+
+      '<div class="row" style="margin-top:12px">'+
+        '<button class="grow" data-edit="'+esc(b.id)+'">✏️ Modifier</button>'+
+        '<button data-dup="'+esc(b.id)+'" aria-label="Dupliquer">⧉</button>'+
+        '<button class="danger" data-del="'+esc(b.id)+'" aria-label="Supprimer">🗑️</button>'+
+      '</div>'+
+    '</article>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+  var add=function(){ openForm(null); };
+  var b1=document.getElementById('btn-add'), b2=document.getElementById('btn-add2');
+  if(b1) b1.onclick=add; if(b2) b2.onclick=add;
+  el.querySelectorAll('[data-edit]').forEach(function(x){ x.onclick=function(){ openForm(x.dataset.edit); }; });
+  el.querySelectorAll('[data-dup]').forEach(function(x){ x.onclick=function(){
+    var o=state.biens.find(function(b){return b.id===x.dataset.dup;}); if(!o) return;
+    var c=Object.assign({},o,{id:uid(),nom:(o.nom||'')+' (copie)',exemple:false});
+    state.biens.splice(state.biens.indexOf(o)+1,0,c); save(); renderBiens(); toast('Bien dupliqué');
+  }; });
+  el.querySelectorAll('[data-del]').forEach(function(x){ x.onclick=function(){
+    var o=state.biens.find(function(b){return b.id===x.dataset.del;}); if(!o) return;
+    if(confirm('Supprimer « '+titre(o)+' » ?')){ state.biens=state.biens.filter(function(b){return b!==o;}); save(); renderBiens(); toast('Bien supprimé'); }
+  }; });
+}
+
+/* ---------- formulaire BIEN ---------- */
+var editingId=null, draft=null;
+function field(key,label,opts){
+  opts=opts||{};
+  var v = draft[key]==null?'':draft[key];
+  if(opts.textarea) return '<label for="f-'+key+'">'+label+'</label><textarea id="f-'+key+'" data-k="'+key+'">'+esc(v)+'</textarea>';
+  return '<div><label for="f-'+key+'">'+label+'</label><input id="f-'+key+'" data-k="'+key+'" value="'+esc(v)+'" '+
+    (opts.text?'type="text" autocomplete="off"':'type="text" inputmode="'+(opts.int?'numeric':'decimal')+'"')+
+    (opts.ph?' placeholder="'+esc(opts.ph)+'"':'')+'></div>';
+}
+function openForm(id){
+  editingId=id;
+  var src = id ? state.biens.find(function(b){return b.id===id;}) : null;
+  draft = src ? Object.assign({},src) : {type:'ancien',dpe:'D',note:3,travaux:0};
+  document.getElementById('sheet-title').textContent = id?'Modifier le bien':'Nouveau bien';
+  var dpeOpts = ['A','B','C','D','E','F','G'].map(function(l){return '<option'+(draft.dpe===l?' selected':'')+'>'+l+'</option>';}).join('');
+  var body =
+    '<div class="card">'+
+      field('nom','Nom du bien',{text:true,ph:'Ex : Maison pierre 4 pièces'})+
+      field('commune','Commune',{text:true,ph:'Ex : Montrond-les-Bains'})+
+      '<label>Type</label><div class="seg" id="seg-type">'+
+        '<button type="button" data-v="ancien" class="'+(draft.type!=='neuf'?'on':'')+'">Ancien</button>'+
+        '<button type="button" data-v="neuf" class="'+(draft.type==='neuf'?'on':'')+'">Neuf</button></div>'+
+      '<div class="grid2">'+field('prix','Prix (€)',{int:true,ph:'230000'})+field('travaux','Travaux estimés (€)',{int:true,ph:'0'})+'</div>'+
+    '</div>'+
+    '<div class="card"><div class="grid2">'+
+      field('surface','Surface hab. (m²)',{ph:'100'})+field('terrain','Terrain (m²)',{int:true,ph:'500'})+
+      field('chambres','Chambres',{int:true,ph:'3'})+
+      '<div><label for="f-dpe">DPE</label><select id="f-dpe" data-k="dpe">'+dpeOpts+'</select></div>'+
+      field('taxeFonciere','Taxe foncière (€/an)',{int:true,ph:'1200'})+field('energie','Chauffage/énergie (€/an)',{int:true,ph:'1500'})+
+    '</div></div>'+
+    '<div class="card"><div class="grid2">'+
+      field('tMontbrison','Trajet Montbrison (min)',{int:true,ph:'20'})+field('tBalbigny','Trajet Balbigny (min)',{int:true,ph:'20'})+
+    '</div><div class="hint">Badge rouge au-delà de 30 min.</div></div>'+
+    '<div class="card"><label>Note perso</label><div class="stars" id="stars"></div>'+
+      field('commentaire','Commentaire',{textarea:true})+'</div>';
+  document.getElementById('sheet-body').innerHTML = body;
+  var sb=document.getElementById('sheet-body');
+  sb.querySelectorAll('[data-k]').forEach(function(inp){
+    inp.addEventListener('input',function(){ draft[inp.dataset.k]=inp.value; updatePreview(); });
+    inp.addEventListener('change',function(){ draft[inp.dataset.k]=inp.value; updatePreview(); });
+  });
+  sb.querySelectorAll('#seg-type button').forEach(function(btn){ btn.onclick=function(){
+    draft.type=btn.dataset.v; sb.querySelectorAll('#seg-type button').forEach(function(x){x.classList.toggle('on',x===btn);}); updatePreview();
+  }; });
+  renderStars();
+  updatePreview();
+  document.getElementById('sheet').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function renderStars(){
+  var s=document.getElementById('stars'), h='';
+  for(var i=1;i<=5;i++) h+='<button type="button" data-n="'+i+'" class="'+(i<=num(draft.note)?'on':'')+'" aria-label="'+i+' sur 5">★</button>';
+  s.innerHTML=h;
+  s.querySelectorAll('button').forEach(function(b){ b.onclick=function(){ var n=+b.dataset.n; draft.note = (num(draft.note)===n? n-1 : n); renderStars(); }; });
+}
+function updatePreview(){
+  var c=Calc.bien(draft,state.foyer);
+  document.getElementById('sheet-preview').innerHTML =
+    'Mensualité <b>'+eur(c.mensTotale)+'</b><br>Endettement <b style="color:'+(c.endettementKo?'var(--bad)':'var(--ok)')+'">'+pct(c.endettement)+'</b>';
+}
+function closeForm(){ document.getElementById('sheet').classList.remove('open'); document.body.style.overflow=''; draft=null; editingId=null; }
+document.getElementById('sheet-close').onclick=closeForm;
+document.getElementById('sheet-save').onclick=function(){
+  ['prix','travaux','surface','terrain','chambres','taxeFonciere','energie','tMontbrison','tBalbigny'].forEach(function(k){ draft[k]=num(draft[k]); });
+  draft.note=num(draft.note);
+  if(!draft.nom && !draft.commune){ toast('Indique au moins un nom ou une commune'); return; }
+  if(editingId){
+    var i=state.biens.findIndex(function(b){return b.id===editingId;});
+    draft.exemple=false; state.biens[i]=draft;
+  } else { draft.id=uid(); state.biens.push(draft); }
+  save(); closeForm(); render(); toast('Bien enregistré ✔');
+};
+
+/* ---------- vue COMPARATIF ---------- */
+var COLS = [
+  {k:'prix', l:'Prix', f:function(c){return eur(c.prix);}, best:'min'},
+  {k:'prixM2', l:'€/m²', f:function(c){return c.prixM2?eur(c.prixM2):'—';}, best:'min', sort:true},
+  {k:'total', l:'Total opé.', f:function(c){return eur(c.total);}, best:'min'},
+  {k:'emprunt', l:'Emprunt', f:function(c){return eur(c.emprunt);}, best:'min'},
+  {k:'mensTotale', l:'Mensualité', f:function(c){return eur(c.mensTotale);}, best:'min', sort:true},
+  {k:'endettement', l:'Endett.', f:function(c){return pct(c.endettement);}, best:'min', ko:function(c){return c.endettementKo;}},
+  {k:'coutReel', l:'Coût réel/mois', f:function(c){return eur(c.coutReel);}, best:'min', sort:true},
+  {k:'coutCredit', l:'Coût crédit', f:function(c){return eur(c.coutCredit);}, best:'min'},
+  {k:'surface', l:'Surface', f:function(c,b){return num(b.surface)+' m²';}, best:'max', v:function(c,b){return num(b.surface);}},
+  {k:'terrain', l:'Terrain', f:function(c,b){return num(b.terrain)+' m²';}, best:'max', v:function(c,b){return num(b.terrain);}},
+  {k:'chambres', l:'Ch.', f:function(c,b){return num(b.chambres);}, best:'max', v:function(c,b){return num(b.chambres);}},
+  {k:'dpe', l:'DPE', f:function(c,b){return b.dpe?'<span class="badge dpe dpe-'+esc(b.dpe)+'">'+esc(b.dpe)+'</span>':'—';}, best:'min', v:function(c,b){return 'ABCDEFG'.indexOf(b.dpe||'G');}},
+  {k:'tMontbrison', l:'→ Montbr.', f:function(c,b){return num(b.tMontbrison)+' min';}, best:'min', v:function(c,b){return num(b.tMontbrison);}, ko:function(c){return c.trajetKoM;}},
+  {k:'tBalbigny', l:'→ Balbigny', f:function(c,b){return num(b.tBalbigny)+' min';}, best:'min', v:function(c,b){return num(b.tBalbigny);}, ko:function(c){return c.trajetKoB;}},
+  {k:'note', l:'Note', f:function(c,b){return '<span style="color:#f2a900">'+stars(b.note)+'</span>';}, best:'max', sort:true, v:function(c,b){return num(b.note);}}
+];
+var SORTS = [
+  {k:'mensTotale', l:'Mensualité', dir:1},
+  {k:'coutReel', l:'Coût réel', dir:1},
+  {k:'prixM2', l:'Prix au m²', dir:1},
+  {k:'note', l:'Note', dir:-1}
+];
+function colVal(col,c,b){ return col.v ? col.v(c,b) : c[col.k]; }
+
+function renderComp(){
+  var f=state.foyer, el=document.getElementById('view-comp');
+  if(!state.biens.length){ el.innerHTML='<h2>Comparatif</h2><div class="card empty">Ajoute des biens pour les comparer.</div>'; return; }
+  var rows = state.biens.map(function(b){ return {b:b, c:Calc.bien(b,f)}; });
+  var srt = SORTS.find(function(s){return s.k===state.sort;}) || SORTS[0];
+  var sortCol = COLS.find(function(c){return c.k===srt.k;});
+  rows.sort(function(x,y){
+    var a=colVal(sortCol,x.c,x.b), b=colVal(sortCol,y.c,y.b);
+    if(srt.k==='prixM2'){ if(!a) return 1; if(!b) return -1; }
+    return (a-b)*srt.dir;
+  });
+  // meilleurs par colonne
+  var bests={};
+  COLS.forEach(function(col){
+    var vals=rows.map(function(r){return colVal(col,r.c,r.b);}).filter(function(v){return isFinite(v) && !(col.k==='prixM2'&&v===0) && v>=0;});
+    if(!vals.length || rows.length<2) return;
+    var target = col.best==='min'? Math.min.apply(null,vals) : Math.max.apply(null,vals);
+    var allSame = vals.every(function(v){return v===target;});
+    if(!allSame) bests[col.k]=target;
+  });
+
+  var html='<h2>Comparatif</h2><div class="chips">'+
+    SORTS.map(function(s){return '<button data-sort="'+s.k+'" class="'+(s.k===srt.k?'on':'')+'">'+s.l+(s.dir===1?' ↑':' ↓')+'</button>';}).join('')+
+    '</div>';
+
+  html+='<div class="table-wrap"><table><thead><tr><th>Bien</th>'+
+    COLS.map(function(c){return '<th class="'+(c.k===srt.k?'sorted':'')+'">'+c.l+'</th>';}).join('')+'</tr></thead><tbody>';
+  rows.forEach(function(r){
+    html+='<tr><td title="'+esc(titre(r.b))+'"><b>'+esc(r.b.nom||'Sans nom')+'</b><br><span class="muted" style="font-size:.78rem">'+esc(r.b.commune||'')+'</span></td>';
+    COLS.forEach(function(col){
+      var v=colVal(col,r.c,r.b), cls=[];
+      if(bests[col.k]!==undefined && v===bests[col.k]) cls.push('best');
+      if(col.ko && col.ko(r.c)) cls.push('worse');
+      html+='<td class="'+cls.join(' ')+'">'+col.f(r.c,r.b)+(col.ko&&col.ko(r.c)?' ⚠️':'')+'</td>';
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table></div><p class="hint">Vert = meilleur sur le critère · Rouge = hors limite (endettement ou trajet &gt; 30 min). Fais glisser le tableau horizontalement.</p>';
+
+  // synthèse lisible sur téléphone
+  html+='<div class="card" style="margin-top:14px"><h2 style="margin-top:0">🏆 Meilleur sur chaque critère</h2><ul class="lines best-list">';
+  COLS.forEach(function(col){
+    if(bests[col.k]===undefined) return;
+    var winners=rows.filter(function(r){return colVal(col,r.c,r.b)===bests[col.k];});
+    html+='<li><span>'+col.l.replace('→','Trajet')+'</span><b style="text-align:right;white-space:normal">'+winners.map(function(w){return esc(w.b.nom||'Sans nom');}).join(', ')+
+      ' <span class="muted" style="font-weight:400">('+col.f(winners[0].c,winners[0].b)+')</span></b></li>';
+  });
+  html+='</ul>';
+  if(rows.length<2) html+='<p class="muted">Ajoute au moins 2 biens pour voir les gagnants.</p>';
+  html+='</div>';
+
+  // éliminatoires
+  var ko = rows.filter(function(r){return r.c.endettementKo||r.c.trajetKoM||r.c.trajetKoB;});
+  if(ko.length){
+    html+='<div class="card"><h2 style="margin-top:0">⚠️ Points bloquants</h2><ul class="lines">';
+    ko.forEach(function(r){
+      var why=[]; if(r.c.endettementKo) why.push('endettement '+pct(r.c.endettement));
+      if(r.c.trajetKoM) why.push('Montbrison '+num(r.b.tMontbrison)+' min'); if(r.c.trajetKoB) why.push('Balbigny '+num(r.b.tBalbigny)+' min');
+      html+='<li><span>'+esc(r.b.nom||'Sans nom')+'</span><b style="color:var(--bad);white-space:normal;text-align:right">'+why.join(' · ')+'</b></li>';
+    });
+    html+='</ul></div>';
+  }
+  el.innerHTML=html;
+  el.querySelectorAll('[data-sort]').forEach(function(b){ b.onclick=function(){ state.sort=b.dataset.sort; save(); renderComp(); }; });
+}
+
+/* ---------- vue FOYER ---------- */
+function renderFoyer(){
+  var f=state.foyer, el=document.getElementById('view-foyer');
+  function inp(k,l,mode,ph){ return '<div><label for="h-'+k+'">'+l+'</label><input id="h-'+k+'" data-h="'+k+'" type="text" inputmode="'+(mode||'decimal')+'" value="'+esc(f[k])+'"'+(ph?' placeholder="'+ph+'"':'')+'></div>'; }
+  var html='<h2>Paramètres du foyer</h2>'+
+    '<div class="card"><div class="grid2">'+
+      '<div><label for="h-nom1">Prénom 1</label><input id="h-nom1" data-h="nom1" type="text" value="'+esc(f.nom1)+'"></div>'+
+      '<div><label for="h-nom2">Prénom 2</label><input id="h-nom2" data-h="nom2" type="text" value="'+esc(f.nom2)+'"></div>'+
+      inp('revenu1','Revenu net/mois 1 (€)','numeric')+inp('revenu2','Revenu net/mois 2 (€)','numeric')+
+    '</div>'+inp('apport','Apport personnel (€)','numeric')+'</div>'+
+    '<div class="card">'+
+      '<label>Durée du crédit</label><div class="seg" id="seg-duree">'+
+        [15,20,25].map(function(d){return '<button type="button" data-d="'+d+'" class="'+(num(f.duree)===d?'on':'')+'">'+d+' ans</button>';}).join('')+'</div>'+
+      '<div class="grid2">'+inp('taux','Taux du crédit (%)')+inp('tauxAssurance','Taux assurance (%)')+
+      inp('endettementMax','Endettement max (%)')+'</div>'+
+      '<div class="hint">Assurance calculée sur le capital emprunté initial (cas le plus courant). Le seuil de 35 % inclut l\'assurance (règle HCSF).</div>'+
+    '</div>'+
+    '<div class="card"><div class="grid2">'+inp('notaireAncien','Frais notaire ancien (%)')+inp('notaireNeuf','Frais notaire neuf (%)')+'</div></div>'+
+    '<div class="card" id="capacite"></div>'+
+    '<div class="card"><h2 style="margin-top:0">💾 Sauvegarde & partage</h2>'+
+      '<p class="muted" style="margin-top:0">Les données sont enregistrées automatiquement sur ce téléphone. Pour les partager avec ta compagne, exporte le fichier puis elle l\'importe sur son téléphone.</p>'+
+      '<div class="row"><button class="primary grow" id="btn-export">⬇️ Exporter (JSON)</button><button class="grow" id="btn-import">⬆️ Importer</button></div>'+
+      (navigator.share?'<button class="block" id="btn-share" style="margin-top:8px">📤 Partager le fichier</button>':'')+
+      '<button class="danger block" id="btn-reset" style="margin-top:8px">Réinitialiser (remet les exemples)</button>'+
+    '</div>';
+  el.innerHTML=html;
+  el.querySelectorAll('[data-h]').forEach(function(i){ i.addEventListener('input',function(){
+    var k=i.dataset.h; f[k] = (k==='nom1'||k==='nom2') ? i.value : i.value; save(); renderCapacite();
+  }); });
+  el.querySelectorAll('#seg-duree button').forEach(function(b){ b.onclick=function(){
+    f.duree=+b.dataset.d; save(); el.querySelectorAll('#seg-duree button').forEach(function(x){x.classList.toggle('on',x===b);}); renderCapacite();
+  }; });
+  document.getElementById('btn-export').onclick=exportJSON;
+  document.getElementById('btn-import').onclick=function(){ document.getElementById('import-file').click(); };
+  var sh=document.getElementById('btn-share'); if(sh) sh.onclick=shareJSON;
+  document.getElementById('btn-reset').onclick=function(){
+    if(confirm('Tout effacer et remettre les paramètres et biens d\'exemple ?\n(Pense à exporter avant si besoin.)')){
+      state={foyer:Object.assign({},DEFAULT_FOYER),biens:exemples(),sort:'mensTotale',view:'foyer'}; save(); renderFoyer(); toast('Réinitialisé');
+    }
+  };
+  renderCapacite();
+}
+function renderCapacite(){
+  var f=state.foyer, rev=num(f.revenu1)+num(f.revenu2), mensMax=rev*num(f.endettementMax)/100;
+  var cap=Calc.capaciteEmprunt(mensMax,f);
+  // budget max d'achat ancien : (prix*(1+notaire)) = cap + apport
+  var budgetAncien=(cap+num(f.apport))/(1+num(f.notaireAncien)/100);
+  var budgetNeuf=(cap+num(f.apport))/(1+num(f.notaireNeuf)/100);
+  var el=document.getElementById('capacite'); if(!el) return;
+  el.innerHTML='<h2 style="margin-top:0">📐 Votre capacité</h2><ul class="lines">'+
+    '<li><span>Revenus du foyer</span><b>'+eur(rev)+' / mois</b></li>'+
+    '<li><span>Mensualité max ('+pct(num(f.endettementMax),0)+')</span><b>'+eur(mensMax)+'</b></li>'+
+    '<li><span>Capital empruntable sur '+num(f.duree)+' ans</span><b>'+eur(cap)+'</b></li>'+
+    '<li><span>Prix max ancien (sans travaux)</span><b>'+eur(budgetAncien)+'</b></li>'+
+    '<li><span>Prix max neuf</span><b>'+eur(budgetNeuf)+'</b></li>'+
+  '</ul><div class="hint">Estimation indicative : la banque regarde aussi le reste à vivre, la stabilité des contrats et les autres crédits en cours.</div>';
+}
+
+/* ---------- export / import ---------- */
+function payload(){ return JSON.stringify({app:'comparateur-immo-42',version:1,exporte:new Date().toISOString(),foyer:state.foyer,biens:state.biens},null,2); }
+function fileName(){ var d=new Date(); return 'comparateur-immo-'+d.toISOString().slice(0,10)+'.json'; }
+function exportJSON(){
+  var blob=new Blob([payload()],{type:'application/json'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fileName();
+  document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href); a.remove();},500);
+  toast('Fichier exporté');
+}
+function shareJSON(){
+  try{
+    var file=new File([payload()],fileName(),{type:'application/json'});
+    if(navigator.canShare && navigator.canShare({files:[file]})) navigator.share({files:[file],title:'Comparateur immo'}).catch(function(){});
+    else exportJSON();
+  }catch(e){ exportJSON(); }
+}
+document.getElementById('import-file').addEventListener('change',function(e){
+  var file=e.target.files[0]; if(!file) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var d=JSON.parse(r.result);
+      if(!d || !Array.isArray(d.biens) || typeof d.foyer!=='object') throw new Error('format');
+      var choix = state.biens.length ? confirm('Fichier : '+d.biens.length+' bien(s).\n\nOK = REMPLACER tes données actuelles\nAnnuler = AJOUTER ses biens aux tiens (sans toucher au foyer)') : true;
+      if(choix){ state.foyer=Object.assign({},DEFAULT_FOYER,d.foyer); state.biens=normalize(d).biens; }
+      else {
+        var ids={}; state.biens.forEach(function(b){ids[b.id]=1;});
+        normalize(d).biens.forEach(function(b){ if(ids[b.id]) b.id=uid(); state.biens.push(b); });
+      }
+      save(); render(); toast('Import réussi ✔');
+    }catch(err){ alert('Fichier invalide : ce n\'est pas un export du comparateur.'); }
+    e.target.value='';
+  };
+  r.readAsText(file);
+});
+
+/* ---------- démarrage ---------- */
+save();
+show(state.view||'biens');
+})();
+</script>
+</body>
+</html>
