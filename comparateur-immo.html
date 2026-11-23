@@ -13,12 +13,18 @@
   --best:#e3f4e8; --best-text:#14612f; --shadow:0 1px 3px rgba(0,0,0,.08);
 }
 @media (prefers-color-scheme: dark){
-  :root{
+  :root:not([data-theme="light"]){
     --bg:#11161c; --card:#1b232c; --text:#e8edf2; --muted:#9aa8b6; --line:#2d3946;
     --primary:#5aa6dc; --primary-2:#1d3344; --ok:#5bd087; --ok-bg:#163524;
     --bad:#ff6b6b; --bad-bg:#3d1a1c; --warn:#f0b54a; --warn-bg:#3a2d12;
     --best:#163524; --best-text:#7be3a2; --shadow:none;
   }
+}
+:root[data-theme="dark"]{
+  --bg:#11161c; --card:#1b232c; --text:#e8edf2; --muted:#9aa8b6; --line:#2d3946;
+  --primary:#5aa6dc; --primary-2:#1d3344; --ok:#5bd087; --ok-bg:#163524;
+  --bad:#ff6b6b; --bad-bg:#3d1a1c; --warn:#f0b54a; --warn-bg:#3a2d12;
+  --best:#163524; --best-text:#7be3a2; --shadow:none;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -583,6 +589,17 @@ function renderCapacite(){
 function payload(){ return JSON.stringify({app:'comparateur-immo-42',version:1,exporte:new Date().toISOString(),foyer:state.foyer,biens:state.biens},null,2); }
 function fileName(){ var d=new Date(); return 'comparateur-immo-'+d.toISOString().slice(0,10)+'.json'; }
 function exportJSON(){
+  if(window.claude && window.claude.use){
+    window.claude.use('downloads').then(function(dl){
+      if(!dl){ exportBlob(); return; }
+      dl.save({filename:fileName(),data:payload()}).then(function(){ toast('Fichier exporté'); })
+        .catch(function(e){ if(e && e.code==='declined') return; toast('Export impossible ici'); });
+    }).catch(exportBlob);
+    return;
+  }
+  exportBlob();
+}
+function exportBlob(){
   var blob=new Blob([payload()],{type:'application/json'});
   var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fileName();
   document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href); a.remove();},500);
@@ -591,7 +608,7 @@ function exportJSON(){
 function shareJSON(){
   try{
     var file=new File([payload()],fileName(),{type:'application/json'});
-    if(navigator.canShare && navigator.canShare({files:[file]})) navigator.share({files:[file],title:'Comparateur immo'}).catch(function(){});
+    if(navigator.canShare && navigator.canShare({files:[file]})) navigator.share({files:[file],title:'Comparateur immo'}).catch(function(e){ if(!e || e.name!=='AbortError') exportJSON(); });
     else exportJSON();
   }catch(e){ exportJSON(); }
 }
